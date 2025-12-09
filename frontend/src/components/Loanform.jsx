@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import DocumentUpload from "./DocumentUpload";
 
 const InputField = ({ label, id, type = "text", value, onChange, placeholder }) => (
   <div className="flex flex-col gap-2">
@@ -24,20 +25,33 @@ const LoanForm = ({ onSubmit, isLoading }) => {
     income: "",
     amount: "",
     purpose: "Home Renovation",
-    document_name: "id_proof.pdf", // Dummy default
+    document_name: "", // Will be set by file upload
   });
+  const [uploadedDocument, setUploadedDocument] = useState(null);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.id]: e.target.value });
   };
 
+  const handleDocumentUpload = (file) => {
+    setUploadedDocument(file);
+    setFormData({ ...formData, document_name: file.name });
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
+    
+    if (!uploadedDocument) {
+      alert("Please upload a document (PAN Card or Aadhaar)");
+      return;
+    }
+    
     // Convert numbers before sending
     onSubmit({
       ...formData,
       income: parseFloat(formData.income),
       amount: parseFloat(formData.amount),
+      document: uploadedDocument, // Send the actual file
     });
   };
 
@@ -62,6 +76,8 @@ const LoanForm = ({ onSubmit, isLoading }) => {
                 <option>Emergency</option>
             </select>
         </div>
+
+        <DocumentUpload onUpload={handleDocumentUpload} isDisabled={isLoading} />
 
         <button
           type="submit"
