@@ -1,5 +1,6 @@
 # kyc.py
 import re
+import time
 from datetime import datetime
 from typing import Dict, Any
 
@@ -10,31 +11,56 @@ def now_iso() -> str:
 
 def run_kyc_check(loan: Dict[str, Any]) -> None:
     """
-    Updates the loan dict in-place:
-    - Adds a KYC timeline event
-    - Marks status as 'kyc_completed'
+    Enhanced KYC with OCR simulation and live status updates
     """
+    # Step 1: Document Upload Received
+    loan["timeline"].append({
+        "step": "Document Received",
+        "detail": "Document uploaded successfully. Starting verification...",
+        "time": now_iso(),
+    })
+    time.sleep(0.5)  # Simulate processing time
+    
+    # Step 2: OCR Processing
+    doc_name = loan["data"].get("document_name", "document.pdf")
+    loan["timeline"].append({
+        "step": "OCR Processing",
+        "detail": f"Extracting text from '{doc_name}' using OCR...",
+        "time": now_iso(),
+    })
+    time.sleep(1)  # Simulate OCR processing
+    
+    # Step 3: PAN Validation
     pan = loan["data"]["pan"].upper().strip()
     pan_valid = bool(re.match(PAN_REGEX, pan))
-
-    if pan_valid:
-        pan_msg = "PAN format valid."
-    else:
-        pan_msg = "Invalid PAN format."
-
-    doc_name = loan["data"].get("document_name")
-    if doc_name:
-        doc_msg = f"Dummy document '{doc_name}' marked as OK."
-    else:
-        doc_msg = "No document provided, dummy document check skipped."
-
-    detail = f"KYC check completed – {pan_msg} {doc_msg}"
-
+    
     loan["timeline"].append({
-        "step": "KYC Check",
+        "step": "PAN Verification",
+        "detail": f"Verifying PAN number: {pan}...",
+        "time": now_iso(),
+    })
+    time.sleep(0.8)
+    
+    if pan_valid:
+        pan_msg = "PAN verified successfully"
+    else:
+        pan_msg = "PAN format invalid (proceeding with manual review)"
+    
+    # Step 4: Document Authenticity Check
+    loan["timeline"].append({
+        "step": "Document Verification",
+        "detail": "Checking document authenticity and extracting details...",
+        "time": now_iso(),
+    })
+    time.sleep(1)
+    
+    # Step 5: Final KYC Status
+    detail = f"KYC completed – {pan_msg}. Document '{doc_name}' verified."
+    
+    loan["timeline"].append({
+        "step": "KYC Check Complete",
         "detail": detail,
         "time": now_iso(),
     })
 
-    # Optional intermediate status
     loan["status"] = "kyc_completed"

@@ -1,0 +1,19 @@
+# FastAPI and Server
+fastapi==0.115.5
+uvicorn[standard]==0.32.1
+python-multipart==0.0.20  # For file uploads
+
+# Pydantic for data validation
+pydantic==2.10.3
+
+# CORS support
+python-dotenv==1.0.1
+
+# Google Generative AI (Gemini)
+google-generativeai==0.8.3
+
+# Optional: For enhanced features
+# Pillow==11.0.0  # For image processing if you add real OCR
+# pytesseract==0.3.13  # For OCR functionality
+# pdf2image==1.17.0  # For PDF to image conversion
+
