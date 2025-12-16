@@ -78,4 +78,3 @@ const LiveStatus = ({ currentStep, steps }) => {
 };
 
 export default LiveStatus;
-

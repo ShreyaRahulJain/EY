@@ -18,7 +18,7 @@ const DocumentUpload = ({ onUpload, isDisabled }) => {
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
-    
+
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       handleFile(e.dataTransfer.files[0]);
     }
@@ -33,9 +33,15 @@ const DocumentUpload = ({ onUpload, isDisabled }) => {
 
   const handleFile = (file) => {
     // Only accept images and PDFs
-    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf'];
+    const validTypes = ["image/jpeg", "image/jpg", "image/png", "application/pdf"];
     if (!validTypes.includes(file.type)) {
-      alert('Please upload a valid document (JPG, PNG, or PDF)');
+      alert("Please upload a valid document (JPG, PNG, or PDF)");
+      return;
+    }
+
+    // Check file size (Max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert("File size must be less than 5MB");
       return;
     }
 
@@ -44,54 +50,56 @@ const DocumentUpload = ({ onUpload, isDisabled }) => {
   };
 
   return (
-    <div className="space-y-3">
-      <label className="text-sm font-semibold text-slate-600">
-        Upload Document (PAN Card / Aadhaar)
-      </label>
-      
-      <div
-        className={`relative border-2 border-dashed rounded-lg p-6 text-center transition-all ${
-          dragActive 
-            ? 'border-yellow-400 bg-yellow-50' 
-            : uploadedFile
-            ? 'border-green-400 bg-green-50'
-            : 'border-slate-300 bg-slate-50 hover:border-slate-400'
-        } ${isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-        onDragEnter={handleDrag}
-        onDragLeave={handleDrag}
-        onDragOver={handleDrag}
-        onDrop={handleDrop}
+    <div
+      className={`relative border-2 border-dashed rounded-lg p-8 text-center transition-all ${
+        dragActive
+          ? "border-yellow-400 bg-yellow-50"
+          : uploadedFile
+          ? "border-green-400 bg-green-50"
+          : "border-gray-300 bg-white hover:border-gray-400"
+      } ${isDisabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+      onDragEnter={handleDrag}
+      onDragLeave={handleDrag}
+      onDragOver={handleDrag}
+      onDrop={handleDrop}
+    >
+      <input
+        type="file"
+        id={`file-upload-${Math.random()}`}
+        className="hidden"
+        onChange={handleChange}
+        accept="image/*,.pdf"
+        disabled={isDisabled}
+      />
+
+      <label
+        htmlFor={`file-upload-${Math.random()}`}
+        className="cursor-pointer block"
       >
-        <input
-          type="file"
-          id="file-upload"
-          className="hidden"
-          onChange={handleChange}
-          accept="image/*,.pdf"
-          disabled={isDisabled}
-        />
-        
-        <label htmlFor="file-upload" className="cursor-pointer">
-          {uploadedFile ? (
-            <div className="space-y-2">
-              <div className="text-3xl">✅</div>
-              <p className="text-sm font-medium text-green-700">{uploadedFile.name}</p>
-              <p className="text-xs text-green-600">Document uploaded successfully</p>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              <div className="text-3xl">📄</div>
-              <p className="text-sm font-medium text-slate-700">
-                Drop your document here or click to browse
-              </p>
-              <p className="text-xs text-slate-500">Supports: JPG, PNG, PDF (Max 5MB)</p>
-            </div>
-          )}
-        </label>
-      </div>
+        {uploadedFile ? (
+          <div className="space-y-3">
+            <div className="text-4xl">✅</div>
+            <p className="text-sm font-semibold text-green-700">
+              {uploadedFile.name}
+            </p>
+            <p className="text-xs text-green-600">
+              {(uploadedFile.size / 1024).toFixed(2)} KB
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <div className="text-5xl">↑</div>
+            <p className="text-sm font-semibold text-gray-700">
+              Click to upload or drag & drop
+            </p>
+            <p className="text-xs text-gray-500">
+              PDF, JPG, PNG (Max 5MB)
+            </p>
+          </div>
+        )}
+      </label>
     </div>
   );
 };
 
 export default DocumentUpload;
-
