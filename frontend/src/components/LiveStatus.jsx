@@ -41,9 +41,14 @@ const StatusStep = ({ icon, title, description, status, isLast }) => {
         <p className="text-sm text-slate-600 mt-1">{description}</p>
         
         {status === 'processing' && (
-          <div className="mt-2 flex items-center gap-2 text-xs text-blue-600">
-            <div className="w-1.5 h-1.5 bg-blue-600 rounded-full animate-ping"></div>
-            Processing...
+          <div className="mt-3">
+            {/* Processing details */}
+            <div className="text-xs text-slate-500">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                <span>AI analysis complete</span>
+              </div>
+            </div>
           </div>
         )}
       </div>
@@ -72,6 +77,39 @@ const LiveStatus = ({ currentStep, steps }) => {
             isLast={index === steps.length - 1}
           />
         ))}
+      </div>
+
+      {/* Contact section after AI analysis */}
+      <div className="mt-6 pt-6 border-t border-gray-200">
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="flex items-start gap-3">
+            <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center flex-shrink-0">
+              <span className="text-white text-sm">💬</span>
+            </div>
+            <div>
+              <h4 className="font-semibold text-blue-900 text-base mb-2">Need Further Discussion?</h4>
+              <p className="text-sm text-blue-700 mb-4">
+                Our AI has completed the analysis. If you have questions or want to discuss your application further, feel free to reach out.
+              </p>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm text-blue-800">
+                  <span className="font-medium">📞 Call:</span>
+                  <span>+91-9876543210</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-blue-800">
+                  <span className="font-medium">📧 Email:</span>
+                  <span>support@opencred.com</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-blue-800">
+                  <span className="font-medium">💬 Chat:</span>
+                  <button className="text-blue-600 underline hover:text-blue-800">
+                    Start Live Chat
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -57,16 +57,16 @@ const LandingPage = () => {
             </p>
             <div className="flex gap-4">
               <button
-                onClick={() => navigate("/register")}
+                onClick={() => navigate("/apply")}
                 className="px-8 py-3 bg-yellow-400 text-black font-bold rounded-lg hover:bg-yellow-500 transition-all"
               >
                 Apply for Loan →
               </button>
               <button
-                onClick={() => navigate("/login")}
+                onClick={() => navigate("/manager")}
                 className="px-8 py-3 border-2 border-gray-800 text-gray-800 font-semibold rounded-lg hover:bg-gray-800 hover:text-white transition-all"
               >
-                View Demo
+                Manager Dashboard
               </button>
             </div>
           </div>
@@ -112,21 +112,6 @@ const LandingPage = () => {
           </div>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-3 gap-8 mt-16">
-          <div>
-            <h3 className="text-4xl font-bold text-gray-900">2 min</h3>
-            <p className="text-gray-600 mt-1">Processing Time</p>
-          </div>
-          <div>
-            <h3 className="text-4xl font-bold text-gray-900">99.8%</h3>
-            <p className="text-gray-600 mt-1">Accuracy Rate</p>
-          </div>
-          <div>
-            <h3 className="text-4xl font-bold text-gray-900">24/7</h3>
-            <p className="text-gray-600 mt-1">Availability</p>
-          </div>
-        </div>
       </section>
 
       {/* Features Section */}
@@ -248,7 +233,7 @@ const LandingPage = () => {
             </div>
 
             <button
-              onClick={() => navigate("/register")}
+              onClick={() => navigate("/apply")}
               className="px-12 py-4 bg-yellow-400 text-black font-bold rounded-lg hover:bg-yellow-500 transition-all text-lg"
             >
               START YOUR APPLICATION

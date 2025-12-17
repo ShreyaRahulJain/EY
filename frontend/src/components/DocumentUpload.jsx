@@ -49,6 +49,8 @@ const DocumentUpload = ({ onUpload, isDisabled }) => {
     onUpload(file);
   };
 
+  const inputId = React.useId();
+
   return (
     <div
       className={`relative border-2 border-dashed rounded-lg p-8 text-center transition-all ${
@@ -65,7 +67,7 @@ const DocumentUpload = ({ onUpload, isDisabled }) => {
     >
       <input
         type="file"
-        id={`file-upload-${Math.random()}`}
+        id={inputId}
         className="hidden"
         onChange={handleChange}
         accept="image/*,.pdf"
@@ -73,7 +75,7 @@ const DocumentUpload = ({ onUpload, isDisabled }) => {
       />
 
       <label
-        htmlFor={`file-upload-${Math.random()}`}
+        htmlFor={inputId}
         className="cursor-pointer block"
       >
         {uploadedFile ? (

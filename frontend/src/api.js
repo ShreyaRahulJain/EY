@@ -17,3 +17,34 @@ export const checkLoanStatus = async (loanId) => {
   if (!response.ok) throw new Error("Status check failed");
   return response.json();
 };
+
+export const sendChatMessage = async (loanId, message) => {
+  const response = await fetch(`${API_BASE_URL}/chat`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      loan_id: loanId,
+      message: message,
+    }),
+  });
+  if (!response.ok) throw new Error("Chat message failed");
+  return response.json();
+};
+
+export const sendChatbotMessage = async (message, conversationHistory, collectedData) => {
+  const response = await fetch(`${API_BASE_URL}/chatbot`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      message: message,
+      conversation_history: conversationHistory,
+      collected_data: collectedData,
+    }),
+  });
+  if (!response.ok) throw new Error("Chatbot message failed");
+  return response.json();
+};

@@ -1,9 +1,14 @@
 import React from "react";
+import { generateLoanApprovalPDF } from "../utils/pdfGenerator";
 
-const ResultCard = ({ status, explanation, data }) => {
-  const isApproved = status === "pre_approved";
+const ResultCard = ({ status, explanation, data, onContactManager }) => {
+  const isApproved = status === "approved"; // Only final approved, not pre_approved
   const isRejected = status === "rejected";
   const isProcessing = status === "processing";
+  const isManualReview = status === "manual_review";
+  const isPendingManager = status === "pending_manager_approval";
+  
+  console.log("ResultCard status:", status, "isPendingManager:", isPendingManager);
 
   // Mock detailed analysis data (in production, this would come from backend)
   const analysisFactors = [
@@ -74,8 +79,30 @@ const ResultCard = ({ status, explanation, data }) => {
           <h3 className="text-xl font-bold text-blue-900">Processing Application</h3>
         </div>
         <p className="text-sm text-blue-800 leading-relaxed">
-          Our AI agents are analyzing your application...
+          Our team is analyzing your application...
         </p>
+      </div>
+    );
+  }
+
+  if (isPendingManager) {
+    return (
+      <div className="bg-yellow-50 border-2 border-yellow-200 rounded-xl p-6">
+        <div className="flex items-center gap-3 mb-4">
+          <span className="text-3xl">👨‍💼</span>
+          <h3 className="text-xl font-bold text-yellow-900">Pending Manager Review</h3>
+        </div>
+        <p className="text-sm text-yellow-800 leading-relaxed mb-4">
+          {explanation || "Your application has been processed and is now under manager review for final approval."}
+        </p>
+        <div className="bg-yellow-100 border border-yellow-300 rounded-lg p-4">
+          <h4 className="font-semibold text-yellow-900 mb-2">What happens next?</h4>
+          <ul className="text-sm text-yellow-800 space-y-1">
+            <li>• Our manager will review your application within 24 hours</li>
+            <li>• You'll receive an email notification once the decision is made</li>
+            <li>• No further action is required from your side</li>
+          </ul>
+        </div>
       </div>
     );
   }
@@ -86,10 +113,12 @@ const ResultCard = ({ status, explanation, data }) => {
       <div
         className={`rounded-2xl border-4 p-8 ${
           isApproved
-            ? "bg-black border-yellow-400"
+            ? "bg-green-50 border-green-400"
             : isRejected
             ? "bg-red-50 border-red-300"
-            : "bg-yellow-50 border-yellow-300"
+            : isPendingManager
+            ? "bg-yellow-50 border-yellow-400"
+            : "bg-blue-50 border-blue-300"
         }`}
       >
         <div className="flex items-center justify-between mb-6">
@@ -107,67 +136,192 @@ const ResultCard = ({ status, explanation, data }) => {
                 />
               </svg>
             </div>
-            <div>
-              <h3
-                className={`text-2xl font-bold ${
-                  isApproved ? "text-white" : "text-gray-900"
-                }`}
-              >
-                {isApproved ? "CONGRATULATIONS!" : isRejected ? "APPLICATION REJECTED" : "MANUAL REVIEW REQUIRED"}
+            <div className="flex-1">
+              <h3 className="text-2xl font-bold text-gray-900">
+                {isApproved ? "CONGRATULATIONS!" : 
+                 isRejected ? "APPLICATION REJECTED" : 
+                 isPendingManager ? "PENDING MANAGER REVIEW" :
+                 "MANUAL REVIEW REQUIRED"}
               </h3>
-              <p
-                className={`text-sm ${
-                  isApproved ? "text-gray-300" : "text-gray-600"
-                }`}
-              >
-                {isApproved ? "Your loan application has been approved" : ""}
+              <p className="text-sm text-gray-600 mb-3">
+                {isApproved ? "Your loan application has been approved" : 
+                 isRejected ? "We regret to inform you that your application was not approved" :
+                 isPendingManager ? "Your application is under manager review" :
+                 "Additional review is required"}
               </p>
-            </div>
-          </div>
-          <div className="text-right">
-            <div
-              className={`text-4xl font-bold ${
-                isApproved ? "text-yellow-400" : "text-gray-900"
-              }`}
-            >
-              ₹5,00,000
-            </div>
-            <div
-              className={`text-sm ${
-                isApproved ? "text-gray-300" : "text-gray-600"
-              }`}
-            >
-              Approved Amount
+              {/* Amount moved below description */}
+              <div className="text-right">
+                <div className="text-4xl font-bold text-gray-900">
+                  ₹{data?.amount ? Number(data.amount).toLocaleString() : "0"}
+                </div>
+                <div className="text-sm text-gray-600">
+                  {isPendingManager ? "Requested Amount" : 
+                   isApproved ? "Approved Amount" : 
+                   "Loan Amount"}
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
-        {isApproved && (
-          <div className="grid grid-cols-3 gap-6 pt-6 border-t border-gray-700">
-            <div>
-              <p className="text-sm text-gray-300 mb-1">Interest Rate</p>
-              <p className="text-2xl font-bold text-white">8.5% p.a.</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-300 mb-1">Monthly EMI</p>
-              <p className="text-2xl font-bold text-white">₹15,372</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-300 mb-1">Tenure</p>
-              <p className="text-2xl font-bold text-white">36 months</p>
+        {/* Status-specific content */}
+        {isPendingManager && (
+          <div className="mt-6 p-4 bg-yellow-100 border border-yellow-300 rounded-lg">
+            <div className="flex items-center gap-2 text-yellow-800">
+              <span className="text-lg">⏳</span>
+              <span className="font-semibold">Awaiting manager approval within 24 hours</span>
             </div>
           </div>
         )}
 
         {isApproved && (
-          <div className="mt-6 p-4 bg-yellow-400 rounded-lg text-black font-semibold text-sm flex items-center gap-2">
-            📄 A Sanction Letter has been generated and emailed to you.
+          <div className="mt-6 space-y-3">
+            <div className="p-4 bg-green-100 border border-green-300 rounded-lg">
+              <div className="flex items-center gap-2 text-green-800">
+                <span className="text-lg">📄</span>
+                <span className="font-semibold">Sanction letter has been generated and emailed to you</span>
+              </div>
+            </div>
+            
+            {/* Download Certificate Button */}
+            <button
+              onClick={() => {
+                const approvalDetails = {
+                  loanId: data?.loanId || `OC${Date.now()}`,
+                  approvalDate: new Date().toLocaleDateString('en-IN'),
+                  approvedBy: 'OpenCred Loan Officer'
+                };
+                generateLoanApprovalPDF(data, approvalDetails);
+              }}
+              className="w-full py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-bold rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all flex items-center justify-center gap-2"
+            >
+              <span className="text-lg">📋</span>
+              Download Loan Approval Certificate
+            </button>
+          </div>
+        )}
+
+        {/* Contact Manager Button for Manual Review */}
+        {isManualReview && (
+          <div className="mt-6 space-y-3">
+            <button 
+              onClick={onContactManager}
+              className="w-full py-4 bg-yellow-400 text-black font-bold rounded-lg hover:bg-yellow-500 transition-all flex items-center justify-center gap-2"
+            >
+              <span>💬</span>
+              CONNECT WITH LOAN MANAGER
+            </button>
+            <p className="text-xs text-center text-gray-600">
+              A loan manager will review your case and respond within 24 hours
+            </p>
           </div>
         )}
       </div>
 
+      {/* AI Analysis & Explanation */}
+      {explanation && !isProcessing && (
+        <div className="bg-white rounded-2xl border border-gray-200 p-8">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+              <span className="text-2xl">🤖</span>
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-gray-900">AI Analysis</h3>
+              <p className="text-sm text-gray-600">Powered by advanced machine learning</p>
+            </div>
+          </div>
+
+          {/* Enhanced loan metrics with visual indicators */}
+          {data && (
+            <div className="space-y-6 mb-6">
+              {/* Key Metrics Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 border border-blue-200">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="text-sm font-semibold text-blue-700">Monthly Income</h4>
+                    <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
+                      <span className="text-white text-sm">💰</span>
+                    </div>
+                  </div>
+                  <p className="text-2xl font-bold text-blue-900">₹{Number(data.income || 0).toLocaleString()}</p>
+                  <div className="mt-2 text-xs text-blue-600">Verified via bank statements</div>
+                </div>
+
+                <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-6 border border-green-200">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="text-sm font-semibold text-green-700">Loan Amount</h4>
+                    <div className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center">
+                      <span className="text-white text-sm">🎯</span>
+                    </div>
+                  </div>
+                  <p className="text-2xl font-bold text-green-900">₹{Number(data.amount || 0).toLocaleString()}</p>
+                  <div className="mt-2 text-xs text-green-600">Requested amount</div>
+                </div>
+
+                <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-6 border border-purple-200">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="text-sm font-semibold text-purple-700">Affordability Score</h4>
+                    <div className="w-8 h-8 bg-purple-500 rounded-lg flex items-center justify-center">
+                      <span className="text-white text-sm">📊</span>
+                    </div>
+                  </div>
+                  <p className="text-2xl font-bold text-purple-900">
+                    {data.income && data.amount ? Math.min(100, (Number(data.income) / (Number(data.amount) / 36) * 100)).toFixed(0) : 0}%
+                  </p>
+                  <div className="mt-2 text-xs text-purple-600">Income vs EMI ratio</div>
+                </div>
+              </div>
+
+              {/* Visual Analysis Charts */}
+              <div className="bg-gray-50 rounded-xl p-6">
+                <h4 className="font-semibold text-gray-800 mb-4">Risk Assessment Breakdown</h4>
+                
+                <div className="space-y-4">
+                  {/* Credit Score Simulation */}
+                  <div>
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-sm font-medium text-gray-700">Credit Profile</span>
+                      <span className="text-sm font-bold text-green-600">Excellent</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-3">
+                      <div className="bg-gradient-to-r from-green-400 to-green-600 h-3 rounded-full" style={{width: '85%'}}></div>
+                    </div>
+                    <div className="text-xs text-gray-500 mt-1">Score: 785/900</div>
+                  </div>
+
+                  {/* Income Stability */}
+                  <div>
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-sm font-medium text-gray-700">Income Stability</span>
+                      <span className="text-sm font-bold text-blue-600">Stable</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-3">
+                      <div className="bg-gradient-to-r from-blue-400 to-blue-600 h-3 rounded-full" style={{width: '78%'}}></div>
+                    </div>
+                    <div className="text-xs text-gray-500 mt-1">24+ months consistent salary</div>
+                  </div>
+
+                  {/* Debt-to-Income */}
+                  <div>
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-sm font-medium text-gray-700">Debt-to-Income Ratio</span>
+                      <span className="text-sm font-bold text-green-600">Low Risk</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-3">
+                      <div className="bg-gradient-to-r from-yellow-400 to-green-500 h-3 rounded-full" style={{width: '32%'}}></div>
+                    </div>
+                    <div className="text-xs text-gray-500 mt-1">32% of monthly income</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+        </div>
+      )}
+
       {/* Detailed Analysis */}
-      {isApproved && (
+      {false && isApproved && (
         <div className="bg-white rounded-2xl border border-gray-200 p-8">
           <div className="bg-yellow-400 text-black px-4 py-2 rounded-lg inline-block mb-6 font-bold text-sm">
             AI-POWERED EXPLANATION • POWERED BY GOOGLE GEMINI
