@@ -1,39 +1,33 @@
 # agents/explanation.py
-from ..util.llm import get_gemini_model
+from ..util.llm import chat_with_grok
 
 def generate_explanation(loan_data: dict, status: str, math_details: str):
-    model = get_gemini_model()
     
     prompt = f"""
-        You are a helpful bank loan officer.
+        You are a bank loan officer writing to a customer.
 
         Customer Name: {loan_data['name']}
-
         Loan Status: {status}
+        Analysis Details: {math_details}
 
-        
+        Write a professional 2-sentence message to {loan_data['name']}.
 
-        Technical Data: {math_details}
-
-        
-
-        Task: Write a 2-sentence message to {loan_data['name']}.
-
-        
-
-        CRITICAL INSTRUCTIONS:
-
-        1. If status is 'pre_approved', Congratulate them enthusiastically.
-
-        2. If status is 'manual_review' or 'rejected', YOU MUST EXPLAIN WHY based on the Technical Data (e.g., "High EMI compared to income").
-
-        3. Be polite but clear. Do not use technical jargon like "Ratio".
+        INSTRUCTIONS:
+        1. If 'pre_approved': Congratulate them warmly and mention next steps.
+        2. If 'manual_review' or 'rejected': Explain the reason clearly without technical jargon.
+        3. Be professional, empathetic, and clear.
+        4. Do NOT mention AI, algorithms, or automated systems.
+        5. Write as if you personally reviewed their application.
 
         """
     
     try:
-        response = model.generate_content(prompt)
-        return response.text.strip()
+        messages = [
+            {"role": "system", "content": "You are a helpful bank loan officer."},
+            {"role": "user", "content": prompt}
+        ]
+        response = chat_with_grok(messages, model="google/gemini-2.5-flash")
+        return response.strip()
     except Exception as e:
         print(f"ERROR {e}")
         return f"Application is {status}."

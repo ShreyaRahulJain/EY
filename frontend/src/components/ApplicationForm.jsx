@@ -1,22 +1,33 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import DocumentUpload from "./DocumentUpload";
 
 const ApplicationForm = ({ onSubmit, isLoading }) => {
   const navigate = useNavigate();
-  const [currentStep, setCurrentStep] = useState(1);
+  const location = useLocation();
+  
+  // Check if coming from chatbot
+  const urlParams = new URLSearchParams(location.search);
+  const stepFromUrl = parseInt(urlParams.get('step')) || 1;
+  const chatbotData = JSON.parse(sessionStorage.getItem('chatbotData') || '{}');
+  
+  console.log("ApplicationForm - URL params:", location.search);
+  console.log("ApplicationForm - Step from URL:", stepFromUrl);
+  console.log("ApplicationForm - Chatbot data:", chatbotData);
+  
+  const [currentStep, setCurrentStep] = useState(stepFromUrl);
   const [formData, setFormData] = useState({
-    fullName: "",
-    email: "",
-    phone: "",
-    pan: "",
-    address: "",
-    employmentType: "Salaried",
-    income: "",
-    amount: "",
-    purpose: "Personal Loan",
-    tenure: "36 Months",
-    agreeToTerms: false,
+    fullName: chatbotData.fullName || "",
+    email: chatbotData.email || "",
+    phone: chatbotData.phone || "",
+    pan: chatbotData.pan || "",
+    address: chatbotData.address || "",
+    employmentType: chatbotData.employmentType || "Salaried",
+    income: chatbotData.income || "",
+    amount: chatbotData.amount || "",
+    purpose: chatbotData.purpose || "Personal Loan",
+    tenure: chatbotData.tenure ? `${chatbotData.tenure} Months` : "36 Months",
+    agreeToTerms: stepFromUrl === 2 ? true : false, // Auto-agree if coming from chatbot
   });
   const [uploadedDocuments, setUploadedDocuments] = useState({
     pan: null,
@@ -25,6 +36,15 @@ const ApplicationForm = ({ onSubmit, isLoading }) => {
     salarySlips: null,
   });
 
+  // Clean up session storage when component unmounts
+  useEffect(() => {
+    return () => {
+      if (stepFromUrl === 2) {
+        sessionStorage.removeItem('chatbotData');
+      }
+    };
+  }, [stepFromUrl]);
+
   const handleChange = (e) => {
     const value =
       e.target.type === "checkbox" ? e.target.checked : e.target.value;
@@ -32,6 +52,7 @@ const ApplicationForm = ({ onSubmit, isLoading }) => {
   };
 
   const handleDocumentUpload = (docType, file) => {
+    console.log(`Document uploaded: ${docType}`, file.name, `${(file.size / 1024).toFixed(2)} KB`);
     setUploadedDocuments({ ...uploadedDocuments, [docType]: file });
   };
 
@@ -65,16 +86,32 @@ const ApplicationForm = ({ onSubmit, isLoading }) => {
       return;
     }
 
-    // Prepare data for submission
-    onSubmit({
+    // Prepare data for submission (for demo, we're just sending metadata)
+    // Create a summary of all uploaded documents
+    const documentSummary = [
+      uploadedDocuments.pan ? `PAN: ${uploadedDocuments.pan.name}` : null,
+      uploadedDocuments.aadhaar ? `Aadhaar: ${uploadedDocuments.aadhaar.name}` : null,
+      uploadedDocuments.bankStatement ? `Bank Statement: ${uploadedDocuments.bankStatement.name}` : null,
+      uploadedDocuments.salarySlips ? `Salary Slips: ${uploadedDocuments.salarySlips.name}` : null,
+    ].filter(Boolean).join(", ");
+
+    const submissionData = {
       name: formData.fullName,
       pan: formData.pan,
       income: parseFloat(formData.income),
       amount: parseFloat(formData.amount),
       purpose: formData.purpose,
-      document: uploadedDocuments.pan, // Primary document
-      document_name: uploadedDocuments.pan.name,
+      document_name: documentSummary || "Documents uploaded"
+    };
+
+    console.log("Submitting application with documents:", submissionData);
+    console.log("Uploaded documents:", {
+      pan: uploadedDocuments.pan?.name,
+      aadhaar: uploadedDocuments.aadhaar?.name,
+      bankStatement: uploadedDocuments.bankStatement?.name,
+      salarySlips: uploadedDocuments.salarySlips?.name,
     });
+    onSubmit(submissionData);
   };
 
   const renderStepIndicator = () => {
@@ -382,11 +419,11 @@ const ApplicationForm = ({ onSubmit, isLoading }) => {
               <div className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* PAN Card */}
-                  <div className="border-2 border-gray-200 rounded-lg p-6">
+                  <div className={`border-2 rounded-lg p-6 ${uploadedDocuments.pan ? 'border-green-400 bg-green-50' : 'border-gray-200'}`}>
                     <div className="flex items-center justify-between mb-4">
                       <h4 className="font-bold text-gray-900">PAN Card</h4>
-                      <span className="text-xs font-semibold bg-gray-100 px-3 py-1 rounded">
-                        UPLOAD REQUIRED
+                      <span className={`text-xs font-semibold px-3 py-1 rounded ${uploadedDocuments.pan ? 'bg-green-200 text-green-800' : 'bg-gray-100'}`}>
+                        {uploadedDocuments.pan ? 'UPLOADED' : 'UPLOAD REQUIRED'}
                       </span>
                     </div>
                     <p className="text-xs text-gray-600 mb-4">IDENTITY</p>
@@ -397,11 +434,11 @@ const ApplicationForm = ({ onSubmit, isLoading }) => {
                   </div>
 
                   {/* Aadhaar Card */}
-                  <div className="border-2 border-gray-200 rounded-lg p-6">
+                  <div className={`border-2 rounded-lg p-6 ${uploadedDocuments.aadhaar ? 'border-green-400 bg-green-50' : 'border-gray-200'}`}>
                     <div className="flex items-center justify-between mb-4">
                       <h4 className="font-bold text-gray-900">Aadhaar Card</h4>
-                      <span className="text-xs font-semibold bg-gray-100 px-3 py-1 rounded">
-                        UPLOAD REQUIRED
+                      <span className={`text-xs font-semibold px-3 py-1 rounded ${uploadedDocuments.aadhaar ? 'bg-green-200 text-green-800' : 'bg-gray-100'}`}>
+                        {uploadedDocuments.aadhaar ? 'UPLOADED' : 'UPLOAD REQUIRED'}
                       </span>
                     </div>
                     <p className="text-xs text-gray-600 mb-4">IDENTITY</p>
@@ -412,13 +449,13 @@ const ApplicationForm = ({ onSubmit, isLoading }) => {
                   </div>
 
                   {/* Bank Statement */}
-                  <div className="border-2 border-gray-200 rounded-lg p-6">
+                  <div className={`border-2 rounded-lg p-6 ${uploadedDocuments.bankStatement ? 'border-green-400 bg-green-50' : 'border-gray-200'}`}>
                     <div className="flex items-center justify-between mb-4">
                       <h4 className="font-bold text-gray-900">
                         Bank Statement (Last 3 months)
                       </h4>
-                      <span className="text-xs font-semibold bg-gray-100 px-3 py-1 rounded">
-                        UPLOAD REQUIRED
+                      <span className={`text-xs font-semibold px-3 py-1 rounded ${uploadedDocuments.bankStatement ? 'bg-green-200 text-green-800' : 'bg-gray-100'}`}>
+                        {uploadedDocuments.bankStatement ? 'UPLOADED' : 'UPLOAD REQUIRED'}
                       </span>
                     </div>
                     <p className="text-xs text-gray-600 mb-4">FINANCIAL</p>
@@ -429,13 +466,13 @@ const ApplicationForm = ({ onSubmit, isLoading }) => {
                   </div>
 
                   {/* Salary Slips */}
-                  <div className="border-2 border-gray-200 rounded-lg p-6">
+                  <div className={`border-2 rounded-lg p-6 ${uploadedDocuments.salarySlips ? 'border-green-400 bg-green-50' : 'border-gray-200'}`}>
                     <div className="flex items-center justify-between mb-4">
                       <h4 className="font-bold text-gray-900">
                         Salary Slips (Last 3 months)
                       </h4>
-                      <span className="text-xs font-semibold bg-gray-100 px-3 py-1 rounded">
-                        UPLOAD REQUIRED
+                      <span className={`text-xs font-semibold px-3 py-1 rounded ${uploadedDocuments.salarySlips ? 'bg-green-200 text-green-800' : 'bg-gray-100'}`}>
+                        {uploadedDocuments.salarySlips ? 'UPLOADED' : 'UPLOAD REQUIRED'}
                       </span>
                     </div>
                     <p className="text-xs text-gray-600 mb-4">FINANCIAL</p>

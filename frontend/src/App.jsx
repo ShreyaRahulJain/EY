@@ -3,9 +3,14 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-d
 import LandingPage from "./components/LandingPage";
 import LoginPage from "./components/LoginPage";
 import RegisterPage from "./components/RegisterPage";
+import ApplicationChoice from "./components/ApplicationChoice";
 import ApplicationForm from "./components/Applicationform";
+import ChatbotAssistant from "./components/ChatbotAssistant";
+import ProtectedManagerDashboard from "./components/ProtectedManagerDashboard";
+import SimpleManagerTest from "./components/SimpleManagerTest";
 import LiveStatus from "./components/LiveStatus";
 import ResultCard from "./components/ResultCard";
+import ChatInterface from "./components/ChatInterface";
 import { submitLoanApplication, checkLoanStatus } from "./api";
 
 // Main Application Component with Status Tracking
@@ -13,6 +18,7 @@ function ApplicationStatus() {
   const [loanId, setLoanId] = useState(null);
   const [statusData, setStatusData] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [showChat, setShowChat] = useState(false);
 
   // 1. Submit Handler
   const handleLoanSubmit = async (formData) => {
@@ -165,6 +171,7 @@ function ApplicationStatus() {
                 status={statusData.status}
                 explanation={statusData.explanation}
                 data={statusData.data}
+                onContactManager={() => setShowChat(true)}
               />
             )}
           </div>
@@ -175,8 +182,36 @@ function ApplicationStatus() {
           </div>
         </div>
       </main>
+
+      {/* Chat Interface Modal */}
+      {showChat && (
+        <ChatInterface
+          loanId={loanId}
+          userName={statusData?.data?.name || "User"}
+          onClose={() => setShowChat(false)}
+        />
+      )}
     </div>
   );
+}
+
+// Chatbot Flow Component
+function ChatbotFlow() {
+  const [loanId, setLoanId] = useState(null);
+  const [statusData, setStatusData] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const handleChatbotComplete = (collectedData) => {
+    // Store chatbot data and redirect to document upload step
+    sessionStorage.setItem('chatbotData', JSON.stringify(collectedData));
+    window.location.href = "/apply/manual?step=2";
+  };
+
+  if (!loanId) {
+    return <ChatbotAssistant onComplete={handleChatbotComplete} onBack={() => window.history.back()} />;
+  }
+
+  return <ApplicationStatus loanId={loanId} initialStatusData={statusData} />;
 }
 
 // Main App with Router
@@ -187,7 +222,11 @@ function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
-        <Route path="/apply" element={<ApplicationStatus />} />
+        <Route path="/apply" element={<ApplicationChoice />} />
+        <Route path="/apply/manual" element={<ApplicationStatus />} />
+        <Route path="/apply/chatbot" element={<ChatbotFlow />} />
+        <Route path="/manager/test" element={<SimpleManagerTest />} />
+        <Route path="/manager" element={<ProtectedManagerDashboard />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
